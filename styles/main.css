@@ -1,0 +1,631 @@
+/* ============================================================
+   Flatbush Junction BID — Working Session
+   Design system extends the report "Information as Infrastructure"
+   Palette, type and rules carried over so the deck reads as the
+   same body of work. Self-contained (no CDN) — editorial serif
+   stack with Source Serif 4 / Libre Franklin used if installed.
+   ============================================================ */
+
+:root {
+  /* Paper + ink (from the report) */
+  --paper: #faf8f2;
+  --paper-2: #f4f0e7;
+  --paper-3: #efeae0;
+  --ink: #121212;
+  --muted: #3f3b36;
+  --faint: #6a655d;
+  --faintest: #948f86;
+
+  /* Hairlines */
+  --line: #12121221;
+  --line-2: #1212123a;
+  --line-strong: #12121257;
+
+  /* Accents (from the report) */
+  --sea: #2b8499;       /* teal — structure, "what good looks like" */
+  --sea-deep: #1d6678;
+  --sea-wash: #2b849914;
+  --coral: #b65243;     /* coral — tension, the gap, attention */
+  --coral-deep: #9a4032;
+  --coral-wash: #b6524314;
+  --coral-line: #b6524352;
+
+  /* Semantic deltas (from the report) */
+  --up: #11725f;
+  --down: #9a4639;
+  --steady: #12121280;
+
+  /* Type */
+  --serif: "Source Serif 4", "Iowan Old Style", "Palatino Linotype",
+    Palatino, Georgia, "Times New Roman", serif;
+  --sans: "Libre Franklin", system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+
+  /* Rhythm */
+  --pad-x: clamp(1.5rem, 5vw, 6rem);
+  --pad-y: clamp(1.5rem, 4vh, 3.5rem);
+  --measure: 46rem;
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  color: var(--ink);
+  background: var(--paper);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: var(--serif);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body {
+  min-width: 320px;
+  overflow: hidden; /* deck owns the viewport */
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+li,
+figure {
+  margin: 0;
+  padding: 0;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+::selection {
+  background: var(--coral-line);
+  color: var(--ink);
+}
+
+/* ---------- Atmosphere overlays ---------- */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+}
+
+.vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 59;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 100% at 50% 38%,
+    transparent 55%,
+    rgba(18, 18, 18, 0.05) 100%
+  );
+}
+
+/* ============================================================
+   Deck + slide framework
+   ============================================================ */
+#deck {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  padding: calc(var(--pad-y) + 0.5rem) var(--pad-x) calc(var(--pad-y) + 3rem);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(14px);
+  transition: opacity 0.5s var(--ease), transform 0.6s var(--ease),
+    visibility 0s linear 0.6s;
+  overflow: hidden;
+}
+
+.slide.is-active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity 0.55s var(--ease) 0.05s,
+    transform 0.7s var(--ease-out) 0.05s, visibility 0s;
+}
+
+/* Direction-aware: previous slides exit upward, future downward */
+.slide.is-past {
+  transform: translateY(-14px);
+}
+
+.slide__body {
+  display: flex;
+  flex-direction: column;
+  /* center when it fits, fall back to top-aligned scroll when it doesn't —
+     "safe" prevents the content from ever being clipped at the top edge */
+  justify-content: safe center;
+  width: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-2) transparent;
+}
+.slide__body::-webkit-scrollbar {
+  width: 6px;
+}
+.slide__body::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border-radius: 3px;
+}
+.slide__inner {
+  width: 100%;
+  max-width: 84rem;
+  margin-inline: auto;
+  padding: 0.4rem 0;
+}
+
+.slide__top,
+.slide__foot {
+  width: 100%;
+  max-width: 84rem;
+  margin: 0 auto;
+}
+
+/* Slide header band: section kicker + slide index */
+.slide__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.7rem;
+}
+
+.slide__kicker {
+  font-family: var(--sans);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faint);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.slide__kicker .dot {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: var(--sea);
+  display: inline-block;
+}
+.slide[data-accent="coral"] .slide__kicker .dot {
+  background: var(--coral);
+}
+
+.slide__index {
+  font-family: var(--sans);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--faintest);
+}
+.slide__index b {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* Foot band: report wordmark */
+.slide__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-top: 1px solid var(--line);
+  padding-top: 0.7rem;
+  font-family: var(--sans);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faintest);
+}
+
+/* ============================================================
+   Reveal system — staged content within a slide
+   ============================================================ */
+.reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s var(--ease), transform 0.55s var(--ease-out);
+}
+.slide.is-active .reveal.is-shown {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* When a slide first activates, staged items cascade in */
+.slide.is-active .reveal.is-shown.cascade {
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+
+/* ============================================================
+   Navigation chrome
+   ============================================================ */
+#chrome {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+}
+
+/* Click zones for prev / next */
+.navzone {
+  position: absolute;
+  top: 0;
+  bottom: 5.5rem;
+  width: 18%;
+  pointer-events: auto;
+  cursor: pointer;
+  opacity: 0;
+}
+.navzone--prev {
+  left: 0;
+  cursor: w-resize;
+}
+.navzone--next {
+  right: 0;
+  cursor: e-resize;
+}
+
+/* Bottom progress rail */
+.rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 5.5rem;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 var(--pad-x) 1.05rem;
+}
+
+.rail__sections {
+  pointer-events: auto;
+  display: flex;
+  gap: 0.5rem;
+  max-width: 84rem;
+  width: 100%;
+  margin: 0 auto 0.7rem;
+}
+
+.rail__seg {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+  cursor: pointer;
+  background: none;
+  text-align: left;
+  padding: 0;
+}
+
+.rail__seg .bar {
+  height: 2px;
+  width: 100%;
+  background: var(--line-2);
+  position: relative;
+  overflow: hidden;
+}
+.rail__seg .bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: var(--fill, 0%);
+  background: var(--ink);
+  transition: width 0.4s var(--ease);
+}
+.rail__seg[data-accent="coral"] .bar::after {
+  background: var(--coral);
+}
+.rail__seg[data-accent="sea"] .bar::after {
+  background: var(--sea);
+}
+
+.rail__seg .lbl {
+  font-family: var(--sans);
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faintest);
+  transition: color 0.25s var(--ease);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rail__seg.is-current .lbl,
+.rail__seg:hover .lbl {
+  color: var(--ink);
+}
+
+.rail__meta {
+  pointer-events: auto;
+  max-width: 84rem;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--sans);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.rail__hint {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+}
+.rail__hint kbd {
+  font-family: var(--sans);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--line-2);
+  border-radius: 3px;
+  padding: 0.08rem 0.34rem;
+  color: var(--faint);
+  background: var(--paper-2);
+}
+.rail__controls {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+.rail__btn {
+  pointer-events: auto;
+  width: 1.9rem;
+  height: 1.9rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-2);
+  border-radius: 50%;
+  color: var(--muted);
+  transition: border-color 0.2s var(--ease), color 0.2s var(--ease),
+    background 0.2s var(--ease);
+}
+.rail__btn:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+  background: var(--paper-2);
+}
+.rail__btn svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ============================================================
+   Slide overview / jump grid
+   ============================================================ */
+.overview {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(244, 240, 231, 0.86);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: clamp(1.5rem, 5vh, 3rem) var(--pad-x);
+  overflow-y: auto;
+  animation: fade 0.3s var(--ease);
+}
+.overview[hidden] {
+  display: none;
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+.overview__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid var(--line-2);
+  padding-bottom: 0.9rem;
+  margin-bottom: 1.6rem;
+  max-width: 84rem;
+  margin-inline: auto;
+}
+.overview__title {
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.overview__close {
+  font-family: var(--sans);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.overview__close:hover {
+  color: var(--coral);
+}
+.overview__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.9rem;
+  max-width: 84rem;
+  margin: 0 auto;
+}
+.ovcard {
+  text-align: left;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  padding: 0.85rem 0.95rem 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-height: 6.2rem;
+  transition: border-color 0.2s var(--ease), transform 0.2s var(--ease),
+    box-shadow 0.2s var(--ease);
+}
+.ovcard:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px -18px rgba(18, 18, 18, 0.5);
+}
+.ovcard.is-current {
+  border-color: var(--coral);
+  box-shadow: inset 0 0 0 1px var(--coral-line);
+}
+.ovcard__n {
+  font-family: var(--sans);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--faintest);
+}
+.ovcard__sec {
+  font-family: var(--sans);
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sea);
+}
+.ovcard[data-accent="coral"] .ovcard__sec {
+  color: var(--coral);
+}
+.ovcard__t {
+  font-family: var(--serif);
+  font-size: 0.98rem;
+  line-height: 1.2;
+  color: var(--ink);
+  margin-top: auto;
+}
+
+/* ============================================================
+   Typography primitives reused across slide types
+   ============================================================ */
+.eyebrow {
+  font-family: var(--sans);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.headline {
+  font-family: var(--serif);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  line-height: 0.98;
+}
+
+.deck-text {
+  font-family: var(--serif);
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.accent-sea {
+  color: var(--sea-deep);
+}
+.accent-coral {
+  color: var(--coral-deep);
+}
+
+/* Loading state before JS renders */
+.deck-loading {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--faintest);
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 900px) {
+  .slide {
+    grid-template-rows: auto 1fr auto;
+  }
+  .rail__hint {
+    display: none;
+  }
+}
+
+@media (max-width: 680px) {
+  .rail__sections {
+    display: none;
+  }
+  .rail {
+    height: 4rem;
+  }
+  .slide {
+    padding-bottom: calc(var(--pad-y) + 2.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide,
+  .slide.is-active,
+  .reveal,
+  .ovcard {
+    transition-duration: 0.001s !important;
+  }
+}

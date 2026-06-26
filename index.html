@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flatbush Junction BID — Working Session: Information as Infrastructure</title>
+    <meta
+      name="description"
+      content="A working-session presentation for the Flatbush Junction BID: what the district's digital information system does today, where it falls short, and what to build."
+    />
+    <link rel="stylesheet" href="styles/main.css" />
+    <link rel="stylesheet" href="styles/components.css" />
+  </head>
+  <body>
+    <!-- Paper grain + atmosphere overlays -->
+    <div class="grain" aria-hidden="true"></div>
+    <div class="vignette" aria-hidden="true"></div>
+
+    <!-- The deck mounts here -->
+    <main id="deck" aria-label="Presentation slides"></main>
+
+    <!-- Presentation chrome (rendered by JS) -->
+    <div id="chrome" aria-hidden="false"></div>
+
+    <!-- Slide overview / jump grid (rendered by JS, hidden by default) -->
+    <div id="overview" class="overview" hidden></div>
+
+    <script src="js/slides-data.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/deck.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
